@@ -1,6 +1,5 @@
 # Matthew McCracken
 # python knapsack.py -f test1.txt -r
-# search for "# debug" and uncomment to store which items are being taken
 
 import sys
 import math
@@ -14,8 +13,7 @@ class knapsack:
 	exValues = []
 	exItems = []
 	numberOfItems = 0
-	# debug
-	# pickedItems = []
+	pickedItems = []
 
 # function to read from the file and populate a knapsack object
 def createKnapsack(filename):
@@ -99,13 +97,64 @@ def pickItems(ks):
 		if i[1] <= float(ks.maxWeight) - currentWeight:
 
 			# add the item to list and add its weight to the total
-			# debug
-			# ks.pickedItems.append(i)
+			ks.pickedItems.append(i)
 			currentWeight += i[1]
 			totalValue += i[2]
 
 	# output value
 	return totalValue
+
+def greedyHillClimbing(ks):
+
+	# declare temp variables for testing
+	tempItems = []
+	tempValue = 0
+
+	# hold max value for comparing
+	maxValue = 0
+
+	# temporary lists to decide which greedy approach is best
+	weightItems = []
+	valueItems = []
+	ratioItems = []
+
+	# greedy by weight approach
+	sortByWeight(ks)
+	weightMax = pickItems(ks)
+	weightItems = ks.pickedItems
+	ks.pickedItems = []
+
+	# greedy by value approach
+	sortByValue(ks)
+	valueMax = pickItems(ks)
+	valueItems = ks.pickedItems
+	ks.pickedItems = []
+
+	# greedy by ratio approach
+	sortByRatio(ks)
+	ratioMax = pickItems(ks)
+	ratioItems = ks.pickedItems
+	ks.pickedItems = []
+
+	# if ratio max is the highest value save value and items picked
+	if ratioMax >= weightMax and ratioMax >= valueMax:
+		maxValue = ratioMax
+		ks.pickedItems = ratioItems
+
+	# if value max is the highest value save value and items picked
+	elif valueMax >= ratioMax and valueMax >= weightMax:
+		maxValue = valueMax
+		ks.pickedItems = valueItems
+
+	# weight max must be the highest value so save value and items picked
+	else:
+		maxValue = weightMax
+		ks.pickedItems = ratioItems
+
+
+	# return the max value found
+	return maxValue
+
 
 def exhaustiveSearchWithPruning(maxWeight, weightsList, valuesList, totalItems):
 
@@ -182,6 +231,7 @@ exhaustiveSearchWithoutPruningMethod = False
 weightSort = False
 valueSort = False
 ratioSort = False
+hillClimbing = False
 
 # get user input for method of solving and test filename
 n = len(sys.argv)
@@ -198,12 +248,14 @@ for i in range(1, n):
     	valueSort = True
     elif sys.argv[i] == "-r":
     	ratioSort = True
+    elif sys.argv[i] == "-h":
+    	hillClimbing = True
 
 # make sure user passed in all required data
 if filename == "":
 	sys.exit("pass in the name of a file (-f <filename>)")
-elif not exhaustiveSearchWithPruningMethod and not exhaustiveSearchWithoutPruningMethod and not weightSort and not valueSort and not ratioSort:
-	sys.exit("specify a method of solving (-e, -ep, -w, -v, -r)")
+elif not exhaustiveSearchWithPruningMethod and not exhaustiveSearchWithoutPruningMethod and not weightSort and not valueSort and not ratioSort and not hillClimbing:
+	sys.exit("specify a method of solving (-e, -ep, -w, -v, -r, -h)")
 
 # create the knapsack object from the file
 ks = createKnapsack(filename)
@@ -225,6 +277,8 @@ elif exhaustiveSearchWithPruningMethod:
 	print("Max Value:", exhaustiveSearchWithPruning(float(ks.maxWeight), ks.exWeights, ks.exValues, int(ks.numberOfItems)))
 elif exhaustiveSearchWithoutPruningMethod:
 	print("Max Value:", exhaustiveSearchWithoutPruning(ks))
+elif hillClimbing:
+	print("Max Value:", greedyHillClimbing(ks))
 
 # print final runtime
 print("Time(sec):", round(time.time() - start_time, 5))
