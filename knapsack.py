@@ -41,7 +41,7 @@ def createKnapsack(filename):
 		line = line.rstrip(' ')
 
 		# check if exhaustive search is being used because I am going to implement it differently
-		if exhaustiveSearchWithPruningMethod or exhaustiveSearchWithoutPruningMethod:
+		if exhaustiveSearchWithPruningMethod or exhaustiveSearchWithoutPruningMethod or dp:
 			tempList = line.split(',')
 			newKnapsack.exItems.append(tempList[0])
 			newKnapsack.exWeights.append(float(tempList[1]))
@@ -190,9 +190,41 @@ def greedyHillClimbing(ks):
 				maxValue = maxValue - float(i[2]) + float(ks.allItems[testIndex][2])
 				ks.pickedItems[ks.pickedItems.index(i)] = ks.allItems[testIndex]
 				break
-				
+
 	# return the max value found
 	return maxValue
+
+# dynamic programming approach to the knapsack problem
+def dynamicProgramming(ks):
+
+	# create temporary list to hold item calculations
+    tempList = [[0 for x in range(int(ks.maxWeight)+1)] for x in range(int(ks.numberOfItems)+1)]
+  
+    # build lookup table outer
+    for i in range(int(ks.numberOfItems)+1):
+
+    	# build lookup table inner
+        for j in range(int(ks.maxWeight)+1):
+
+        	# if either value is equal to 0, set table index to 0
+            if i == 0 or j == 0:
+                tempList[i][j] = 0
+
+            # set table equal to the higher value between 2 combinations
+            elif ks.exWeights[i-1] <= j:
+            	a = ks.exValues[i-1] + tempList[i-1][int(j-ks.exWeights[i-1])]
+            	b = tempList[i-1][j]
+            	if a >= b:
+            		tempList[i][j] = a
+            	else:
+            		tempList[i][j] = b
+
+            # otherwise set table to previous value
+            else:
+                tempList[i][j] = tempList[i-1][j]
+
+    # return maximum value found in table
+    return tempList[int(ks.numberOfItems)][int(ks.maxWeight)]
 
 
 def exhaustiveSearchWithPruning(maxWeight, weightsList, valuesList, totalItems):
@@ -271,6 +303,7 @@ weightSort = False
 valueSort = False
 ratioSort = False
 hillClimbing = False
+dp = False
 
 # get user input for method of solving and test filename
 n = len(sys.argv)
@@ -289,12 +322,14 @@ for i in range(1, n):
     	ratioSort = True
     elif sys.argv[i] == "-h":
     	hillClimbing = True
+    elif sys.argv[i] == "-d":
+    	dp = True
 
 # make sure user passed in all required data
 if filename == "":
 	sys.exit("pass in the name of a file (-f <filename>)")
-elif not exhaustiveSearchWithPruningMethod and not exhaustiveSearchWithoutPruningMethod and not weightSort and not valueSort and not ratioSort and not hillClimbing:
-	sys.exit("specify a method of solving (-e, -ep, -w, -v, -r, -h)")
+elif not exhaustiveSearchWithPruningMethod and not exhaustiveSearchWithoutPruningMethod and not weightSort and not valueSort and not ratioSort and not hillClimbing and not dp:
+	sys.exit("specify a method of solving (-e, -ep, -w, -v, -r, -h, -d)")
 
 # create the knapsack object from the file
 ks = createKnapsack(filename)
@@ -318,6 +353,8 @@ elif exhaustiveSearchWithoutPruningMethod:
 	print("Max Value:", exhaustiveSearchWithoutPruning(ks))
 elif hillClimbing:
 	print("Max Value:", greedyHillClimbing(ks))
+elif dp:
+	print("Max Value:", dynamicProgramming(ks))
 
 # print final runtime
 print("Time(sec):", round(time.time() - start_time, 5))
