@@ -1,9 +1,10 @@
 # Matthew McCracken
-# python knapsack.py -f test1.txt -r
+# python knapsack.py -f tests/test1.txt -r
 
 import sys
 import math
 import time
+import random
 
 # knapsack class to store data about the bag and potential items
 class knapsack:
@@ -106,10 +107,6 @@ def pickItems(ks):
 
 def greedyHillClimbing(ks):
 
-	# declare temp variables for testing
-	tempItems = []
-	tempValue = 0
-
 	# hold max value for comparing
 	maxValue = 0
 
@@ -151,7 +148,49 @@ def greedyHillClimbing(ks):
 		maxValue = weightMax
 		ks.pickedItems = ratioItems
 
+	# get current weight
+	currentWeight = 0
+	for i in ks.pickedItems:
+		currentWeight += int(i[1])
 
+	# begin hill climbing
+
+	# declare temp variables for testing
+	# tempItems = []
+	# tempValue = 0
+	# tempWeight = 0
+
+	# go through some amount of the list testing values
+	iterations = math.ceil(int(ks.numberOfItems)/2)
+
+	# iterate through items in list
+	for i in ks.pickedItems:
+
+		# repeat random testing until reaching iterations
+		for j in range(iterations):
+
+			# get random index of all items to test in place of i
+			testIndex = random.randint(0,int(ks.numberOfItems)-1)
+
+			# if the random value selected is already in the list it cannot be added
+			if ks.allItems[testIndex] in ks.pickedItems:
+				continue
+
+			# if the weight becomes greater than the max possible weight it cannot be used
+			if float(ks.maxWeight) - float(i[1]) + float(ks.allItems[testIndex][1]) > float(ks.maxWeight):
+				continue
+
+			# if the weight is too much, check a combination of 2 random new items
+			# else:
+			# 	switch 2 values and do checks again
+			#	continue
+
+			# if new max value is greater than old and it made it through previous checks, switch old values with new ones
+			if maxValue - float(i[2]) + float(ks.allItems[testIndex][2]) > maxValue:
+				maxValue = maxValue - float(i[2]) + float(ks.allItems[testIndex][2])
+				ks.pickedItems[ks.pickedItems.index(i)] = ks.allItems[testIndex]
+				break
+				
 	# return the max value found
 	return maxValue
 
